@@ -354,7 +354,7 @@ void HHCC::loadTestingData(){ // Complete
     _coorSystemTmp = "N/A";
     _filenameTmp = "N/A";
     ui->path_ledit->setText(_filenameTmp);
-    _numDataTmp = 300;
+    _numDataTmp = 100;
     ui->table_data_widget->clearContents();
     ui->table_data_widget->setRowCount(0);
     ui->table_data_widget->setColumnWidth(0, 80);
@@ -363,11 +363,11 @@ void HHCC::loadTestingData(){ // Complete
     _rawData[0].clear();
     _rawData[1].clear();
     _rawData[2].clear();
-    for(int idx2 = 0; idx2 < 300; idx2++){
+    for(int idx2 = 0; idx2 < 100; idx2++){
         ui->table_data_widget->insertRow(ui->table_data_widget->rowCount());
         for(int idx = 0; idx < 3; idx++){
             if((idx == 0 && idx2 < 33) ||(idx == 1 && idx2 < 66  && idx2 >= 33) || (idx == 2 && idx2 >= 66))
-                _rawData[idx].push_back(1000*(idx2+1));
+                _rawData[idx].push_back(3000*(idx2+1));
             else
                 _rawData[idx].push_back(0);
             QTableWidgetItem *newItem = new QTableWidgetItem(QString::number(_rawData[idx].last()));
@@ -675,7 +675,7 @@ void HHCC::setupSimulation(){ // Needs Testing (missing conversion
         _currData[0].push_back(tmp);
         _voltData[0].push_back(tmp2);
         //_simPSUData[0].push_back("APPL "+to_QString(tmp2)+","+to_QString(tmp)+"\n");
-        _simPSUData[0].push_back("APPL "+QString::number(tmp2,'f',2)+","+QString::number(tmp,'f',2)+"\n");
+        _simPSUData[0].push_back("APPL "+QString::number(20)+","+QString::number(tmp,'f',2)+"\n");
         _simArdData[0].push_back(isPos(tmp));
         tmp = 1.3984/35*613647*(_yData[idx]*.000000001*1+.000000001*ui->offsetY_sim_ledit->text().toDouble()); //Y Small Coil 1.3984 35 Coils
         tmp2 = tmp*Yres;
@@ -684,7 +684,7 @@ void HHCC::setupSimulation(){ // Needs Testing (missing conversion
         _currData[1].push_back(tmp);
         _voltData[1].push_back(tmp2);
         //_simPSUData[1].push_back("APPL "+to_QString(tmp2)+","+to_QString(tmp)+"\n");
-        _simPSUData[1].push_back("APPL "+QString::number(tmp2,'f',2)+","+QString::number(tmp,'f',2)+"\n");
+        _simPSUData[1].push_back("APPL "+QString::number(20.00,'f',2)+","+QString::number(tmp,'f',2)+"\n");
         _simArdData[1].push_back(isPos(tmp));
         tmp =    1.5/35*613647*(_zData[idx]*.000000001*1+.000000001*ui->offsetZ_sim_ledit->text().toDouble()); //Z Large Coil 1.5 35 Coils
         tmp2 = tmp*Zres;
@@ -694,7 +694,7 @@ void HHCC::setupSimulation(){ // Needs Testing (missing conversion
         _currData[2].push_back(tmp);
         _voltData[2].push_back(tmp2);
         //_simPSUData[2].push_back("APPL "+to_QString(tmp2)+","+to_QString(tmp)+"\n");
-        _simPSUData[2].push_back("APPL "+QString::number(tmp2,'f',2)+","+QString::number(tmp,'f',2)+"\n");
+        _simPSUData[2].push_back("APPL "+QString::number(20.00,'f',2)+","+QString::number(tmp,'f',2)+"\n");
         _simArdData[2].push_back(isPos(tmp));}
 }
 // Runs simulation
@@ -712,11 +712,11 @@ void HHCC::runSimulation(){ // Needs Testing
         tic = std::clock();
         if(!ui->ignorePSU_cbox->isChecked()){
             Sleep(50);
-            _PSUX->WriteData((_simPSUData[0])[idx].toStdString().c_str(),15);
+            _PSUX->WriteData((_simPSUData[0])[idx].toStdString().c_str(),16);
             Sleep(50);
-            _PSUY->WriteData((_simPSUData[1])[idx].toStdString().c_str(),15);
+            _PSUY->WriteData((_simPSUData[1])[idx].toStdString().c_str(),16);
             Sleep(50);
-            _PSUZ->WriteData((_simPSUData[2])[idx].toStdString().c_str(),15);
+            _PSUZ->WriteData((_simPSUData[2])[idx].toStdString().c_str(),16);
             Sleep(50);
             }
         if(!ui->ignoreArd_cbox->isChecked())
