@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+//#include <math.h>
 
 HHCC::HHCC(QWidget *parent) : QMainWindow(parent), ui(new Ui::HHCC)
 {
@@ -353,7 +354,7 @@ void HHCC::loadTestingData(){ // Complete
     _coorSystemTmp = "N/A";
     _filenameTmp = "N/A";
     ui->path_ledit->setText(_filenameTmp);
-    _numDataTmp = 100;
+    _numDataTmp = 300;
     ui->table_data_widget->clearContents();
     ui->table_data_widget->setRowCount(0);
     ui->table_data_widget->setColumnWidth(0, 80);
@@ -362,7 +363,7 @@ void HHCC::loadTestingData(){ // Complete
     _rawData[0].clear();
     _rawData[1].clear();
     _rawData[2].clear();
-    for(int idx2 = 0; idx2 < 100; idx2++){
+    for(int idx2 = 0; idx2 < 300; idx2++){
         ui->table_data_widget->insertRow(ui->table_data_widget->rowCount());
         for(int idx = 0; idx < 3; idx++){
             if((idx == 0 && idx2 < 33) ||(idx == 1 && idx2 < 66  && idx2 >= 33) || (idx == 2 && idx2 >= 66))
@@ -473,16 +474,16 @@ void HHCC::extractData(){ // Complete
 }
 
 QString HHCC::arduino(QString data){
-    char output[255];
-    char incomingData[255];
+    char output[4];
+    char incomingData[4];
     std::string input_string = data.toStdString();
     char *c_string = new char[input_string.size() + 1];
     std::copy(input_string.begin(), input_string.end(), c_string);
     c_string[input_string.size()] = '\n';
 
-    _arduino->WriteData(c_string, 255);
+    _arduino->WriteData(c_string, 4);
     Sleep(100);
-    _arduino->ReadData(output, 255);
+    _arduino->ReadData(output, 4);
     //qDebug() << "output" << output;
     std::string test(output);
     QString desired = QString::fromStdString(test).mid(0, QString::fromStdString(test).indexOf("\r"));
@@ -509,26 +510,47 @@ void HHCC::connectPorts(){ // Needs Testing
         _arduino->newPort(ui->ardPort_com_ledit->text().toStdString());
         if(!_arduino->IsConnected()){
             ui->status_com_label->setText("Could Not Connect to Arduino");
+            delete _arduino;
             _arduino = new Serial();}}
     if(!ui->ignorePSU_cbox->isChecked()){
         _PSUX->newPort(ui->psuX_com_ledit->text().toStdString());
         _PSUY->newPort(ui->psuY_com_ledit->text().toStdString());
         _PSUZ->newPort(ui->psuZ_com_ledit->text().toStdString());
         Sleep(50);
-         if(!_PSUX->IsConnected() || !_PSUY->IsConnected() || !_PSUZ->IsConnected() ||
-            !_PSUX->WriteData("ABORt ; SYST:PRES ; DISPlay:MENU:NAME 3\n",255) ||
-            !_PSUY->WriteData("ABORt ; SYST:PRES ; DISPlay:MENU:NAME 3\n",255) ||
-            !_PSUZ->WriteData("ABORt ; SYST:PRES ; DISPlay:MENU:NAME 3\n",255)){
+         if(!_PSUX->IsConnected() || !_PSUY->IsConnected() || !_PSUZ->IsConnected()){
             ui->status_com_label->setText("Could Not Connect to PSUs");
+            delete _PSUX;
+            delete _PSUY;
+            delete _PSUZ;
             _PSUX = new Serial();
             _PSUY = new Serial();
             _PSUZ = new Serial();}
          else{
+             _PSUX->WriteData("ABOR\n",5);
              Sleep(50);
-             _PSUX->WriteData("OUTP:STAT ON\n",255);
-             _PSUY->WriteData("OUTP:STAT ON\n",255);
-             _PSUZ->WriteData("OUTP:STAT ON\n",255);
-             }}
+             _PSUX->WriteData("SYST:PRES\n",10);
+             Sleep(50);
+             _PSUX->WriteData("DISP:MENU:NAME 3\n",17);
+             Sleep(50);
+             _PSUY->WriteData("ABOR\n",5);
+             Sleep(50);
+             _PSUY->WriteData("SYST:PRES\n",10);
+             Sleep(50);
+             _PSUY->WriteData("DISP:MENU:NAME 3\n",17);
+             Sleep(50);
+             _PSUZ->WriteData("ABOR\n",5);
+             Sleep(50);
+             _PSUZ->WriteData("SYST:PRES\n",10);
+             Sleep(50);
+             _PSUZ->WriteData("DISP:MENU:NAME 3\n",17);
+             Sleep(50);
+             _PSUX->WriteData("OUTP:STAT ON\n",13);
+             Sleep(50);
+             _PSUY->WriteData("OUTP:STAT ON\n",13);
+             Sleep(50);
+             _PSUZ->WriteData("OUTP:STAT ON\n",13);
+             Sleep(50);}}
+    disablePower();
     if( (ui->ignoreArd_cbox->isChecked() || _arduino->IsConnected()) &&
             (ui->ignorePSU_cbox->isChecked() || (_PSUX->IsConnected() && _PSUY->IsConnected() && _PSUZ->IsConnected())) ){
         _flags[1] = 1;
@@ -540,12 +562,43 @@ void HHCC::connectPorts(){ // Needs Testing
 void HHCC::disconnectPorts(){ // Complete
     disablePower();
     if(!ui->ignoreArd_cbox->isChecked()){
+        delete _arduino;
         _arduino = new Serial();}
 
     if(!ui->ignorePSU_cbox->isChecked()){
+        _PSUX->WriteData("ABOR\n",5);
+        Sleep(50);
+        _PSUX->WriteData("SYST:PRES\n",10);
+        Sleep(50);
+        _PSUX->WriteData("DISP:MENU:NAME 3\n",17);
+        Sleep(50);
+        _PSUY->WriteData("ABOR\n",5);
+        Sleep(50);
+        _PSUY->WriteData("SYST:PRES\n",10);
+        Sleep(50);
+        _PSUY->WriteData("DISP:MENU:NAME 3\n",17);
+        Sleep(50);
+        _PSUZ->WriteData("ABOR\n",5);
+        Sleep(50);
+        _PSUZ->WriteData("SYST:PRES\n",10);
+        Sleep(50);
+        _PSUZ->WriteData("DISP:MENU:NAME 3\n",17);
+        Sleep(50);
+        _PSUX->WriteData("OUTP:STAT OFF\n",14);
+        Sleep(50);
+        _PSUY->WriteData("OUTP:STAT OFF\n",14);
+        Sleep(50);
+        _PSUZ->WriteData("OUTP:STAT OFF\n",14);
+        Sleep(50);
+        delete _PSUX;
+        delete _PSUY;
+        delete _PSUZ;
         _PSUX = new Serial();
         _PSUY = new Serial();
-        _PSUZ = new Serial();}
+        _PSUZ = new Serial();
+        qDebug() << _PSUX->IsConnected() <<_PSUY->IsConnected()<<_PSUZ->IsConnected();
+
+    }
     _flags[1] = 0;
     setActive("com");
     infoBoxUpdate();
@@ -554,12 +607,12 @@ void HHCC::disconnectPorts(){ // Complete
 // Disables power for safety
 void HHCC::disablePower(){ // Needs Testing
     if(!ui->ignoreArd_cbox->isChecked() && _arduino->IsConnected()){
-        _arduino->WriteData("000",255);}
+        _arduino->WriteData("000",3);}
 
-    if(!ui->ignorePSU_cbox->isChecked() && (_PSUX->IsConnected() || _PSUY->IsConnected() || _PSUZ->IsConnected())){
-        _PSUX->WriteData("APPL 0.00\n",255);
-        _PSUY->WriteData("APPL 0.00\n",255);
-        _PSUZ->WriteData("APPL 0.00\n",255);}
+    if(!ui->ignorePSU_cbox->isChecked() && _PSUX->IsConnected() && _PSUY->IsConnected() && _PSUZ->IsConnected()){
+        _PSUX->WriteData("APPL 0.00,0.00\n",15);
+        _PSUY->WriteData("APPL 0.00,0.00\n",15);
+        _PSUZ->WriteData("APPL 0.00,0.00\n",15);}
 }
 // Check if time and offsets have been set
 void HHCC::checkSimulationControls(){ // Complete
@@ -582,28 +635,32 @@ void HHCC::checkSimulationControls(){ // Complete
 }
 // Updates sim measurements
 void HHCC::updateMeasurements(){ // Complete
-    ui->measX_sim_label->setText(to_QString(_measX));
-    ui->voltX_sim_label->setText(to_QString(_voltX));
-    ui->currX_sim_label->setText(to_QString(_currX));
-    ui->measY_sim_label->setText(to_QString(_measY));
-    ui->voltY_sim_label->setText(to_QString(_voltY));
-    ui->currY_sim_label->setText(to_QString(_currY));
-    ui->currZ_sim_label->setText(to_QString(_currZ));
-    ui->voltZ_sim_label->setText(to_QString(_voltZ));
-    ui->measZ_sim_label->setText(to_QString(_measZ));
-    ui->theorX_sim_label->setText(to_QString(_theoX));
-    ui->theorY_sim_label->setText(to_QString(_theoY));
-    ui->theorZ_sim_label->setText(to_QString(_theoZ));
+    ui->measX_sim_label->setText(QString::number(_measX,'f',2));
+    ui->voltX_sim_label->setText(QString::number(_voltX,'f',2));
+    ui->currX_sim_label->setText(QString::number(_currX,'f',2));
+    ui->measY_sim_label->setText(QString::number(_measY,'f',2));
+    ui->voltY_sim_label->setText(QString::number(_voltY,'f',2));
+    ui->currY_sim_label->setText(QString::number(_currY,'f',2));
+    ui->currZ_sim_label->setText(QString::number(_currZ,'f',2));
+    ui->voltZ_sim_label->setText(QString::number(_voltZ,'f',2));
+    ui->measZ_sim_label->setText(QString::number(_measZ,'f',2));
+    ui->theorX_sim_label->setText(QString::number(_theoX,'f',2));
+    ui->theorY_sim_label->setText(QString::number(_theoY,'f',2));
+    ui->theorZ_sim_label->setText(QString::number(_theoZ,'f',2));
     ui->simProgress_sim_bar->setValue(_simProgress);
 }
 // Setups simulation for faster looping
 void HHCC::setupSimulation(){ // Needs Testing (missing conversion
-    _simPSUData[0].clear();
-    _simPSUData[1].clear();
-    _simPSUData[2].clear();
-    _simArdData[0].clear();
-    _simArdData[1].clear();
-    _simArdData[2].clear();
+
+    _simPSUData.clear();
+    _simArdData.clear();
+    QVector<QString> tmpQVec;
+    _simPSUData.push_back(tmpQVec);
+    _simPSUData.push_back(tmpQVec);
+    _simPSUData.push_back(tmpQVec);
+    _simArdData.push_back(tmpQVec);
+    _simArdData.push_back(tmpQVec);
+    _simArdData.push_back(tmpQVec);
 
     double tmp, tmp2;
     double Xres = 2.1;
@@ -613,24 +670,31 @@ void HHCC::setupSimulation(){ // Needs Testing (missing conversion
     for(int idx = 0; idx < _xData.size(); ++idx){
         tmp = 1.4492/35*613647*(_xData[idx]*.000000001*1+.000000001*ui->offsetX_sim_ledit->text().toDouble()); //X Middle Coil 1.4492 35 Coils
         tmp2 = tmp*Xres;
+        tmp = roundf(tmp * 100) / 100;
+        tmp2 = roundf(tmp2 * 100) / 100;
         _currData[0].push_back(tmp);
         _voltData[0].push_back(tmp2);
         //_simPSUData[0].push_back("APPL "+to_QString(tmp2)+","+to_QString(tmp)+"\n");
-        _simPSUData[0].push_back("APPL "+to_QString(tmp2)+"\n");
+        _simPSUData[0].push_back("APPL "+QString::number(tmp2,'f',2)+","+QString::number(tmp,'f',2)+"\n");
         _simArdData[0].push_back(isPos(tmp));
         tmp = 1.3984/35*613647*(_yData[idx]*.000000001*1+.000000001*ui->offsetY_sim_ledit->text().toDouble()); //Y Small Coil 1.3984 35 Coils
         tmp2 = tmp*Yres;
+        tmp = roundf(tmp * 100) / 100;
+        tmp2 = roundf(tmp2 * 100) / 100;
         _currData[1].push_back(tmp);
         _voltData[1].push_back(tmp2);
         //_simPSUData[1].push_back("APPL "+to_QString(tmp2)+","+to_QString(tmp)+"\n");
-        _simPSUData[1].push_back("APPL "+to_QString(tmp2)+"\n");
+        _simPSUData[1].push_back("APPL "+QString::number(tmp2,'f',2)+","+QString::number(tmp,'f',2)+"\n");
         _simArdData[1].push_back(isPos(tmp));
         tmp =    1.5/35*613647*(_zData[idx]*.000000001*1+.000000001*ui->offsetZ_sim_ledit->text().toDouble()); //Z Large Coil 1.5 35 Coils
         tmp2 = tmp*Zres;
+        tmp = roundf(tmp * 100) / 100;
+        tmp2 = roundf(tmp2 * 100) / 100;
+        qDebug() << tmp;
         _currData[2].push_back(tmp);
         _voltData[2].push_back(tmp2);
         //_simPSUData[2].push_back("APPL "+to_QString(tmp2)+","+to_QString(tmp)+"\n");
-        _simPSUData[2].push_back("APPL "+to_QString(tmp2)+"\n");
+        _simPSUData[2].push_back("APPL "+QString::number(tmp2,'f',2)+","+QString::number(tmp,'f',2)+"\n");
         _simArdData[2].push_back(isPos(tmp));}
 }
 // Runs simulation
@@ -647,9 +711,14 @@ void HHCC::runSimulation(){ // Needs Testing
     for(int idx = 0;idx < _xData.size(); ++idx){
         tic = std::clock();
         if(!ui->ignorePSU_cbox->isChecked()){
-            _PSUX->WriteData((_simPSUData[0])[idx].toStdString().c_str(),255);
-            _PSUY->WriteData((_simPSUData[1])[idx].toStdString().c_str(),255);
-            _PSUZ->WriteData((_simPSUData[2])[idx].toStdString().c_str(),255);}
+            Sleep(50);
+            _PSUX->WriteData((_simPSUData[0])[idx].toStdString().c_str(),15);
+            Sleep(50);
+            _PSUY->WriteData((_simPSUData[1])[idx].toStdString().c_str(),15);
+            Sleep(50);
+            _PSUZ->WriteData((_simPSUData[2])[idx].toStdString().c_str(),15);
+            Sleep(50);
+            }
         if(!ui->ignoreArd_cbox->isChecked())
             newData = arduino(QString::fromStdString(((_simArdData[0])[idx].toStdString()+(_simArdData[1])[idx].toStdString()+(_simArdData[2])[idx].toStdString())));
         qDebug() << newData;
@@ -695,6 +764,10 @@ void HHCC::runSimulation(){ // Needs Testing
     if(!endSim)
         endSimulation();
 }
+
+
+
+
 // Ends the simulation safely
 void HHCC::endSimulation(){ // Needs Testing
     disablePower();
